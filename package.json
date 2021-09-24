@@ -1,0 +1,15 @@
+{
+  "name": "electron-quick-start",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "dependencies": {
+    "electron": "^15.0.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "start": "electron ."
+  },
+  "author": "Laila",
+  "license": "MIT"
+}
