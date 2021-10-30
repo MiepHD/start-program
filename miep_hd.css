@@ -1,0 +1,8 @@
+body {
+	background: url('https://i.imgur.com/ztRZv3V.jpg') top right no-repeat ;
+	background-attachment: fixed;
+	background-size: cover;
+}
+.header {
+	background: rgba(180, 113, 210, 0.5);
+}

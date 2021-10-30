@@ -4,8 +4,295 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width",initial-scale=1.0>
 	<title>Document</title>
+	<link rel="stylesheet" href="startpage.css">
+	<link rel="stylesheet" href="miep_hd.css">
 </head>
-<body>
+<body id="body" onload="loadImages();">
+	<div id="itemsite" style="display: none;">
+		<h1 id="itemname">Name</h1>
+		<div class="row">
+			<img src="back.png" style="height: 30px; width: 30px;" onclick="backHome();">
+			<div class="outer-box" id="outerbox">
+				<div class="normal-box">
+					<div class="side-image">
+						<img id="itemimage" src="">
+					</div>
+					<div class="side-image-text">
+						<a id="itemgameurl" class="button big-content">Start</a>
+						<p class="big-content">
+							Plattform: <div id="itemplatform" style="font-size: 20px;">Plattform</div>
+						</p>
+						<p class="big-content">
+							Entwickler/innen: <div id="itemdeveloper" style="font-size: 20px;">Entwickler/innen</div>
+						</p>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div id="itemadd" style="display: none;">
+		<h1>Spiel/Programm hinzufügen</h1>
+		<form class="row">
+			<img src="back.png" style="height: 30px; width: 30px;" onclick="backHome();">
+			<div class="outer-box">
+				<div class="normal-box">
+					<label>Name:</label>
+					<input type="text" id="formname" autofocus>
+				</div>
+			</div>
+			<div class="outer-box">
+				<div class="normal-box">
+					<label>ID:</label>
+					<input type="text" id="formid">
+				</div>
+			</div>
+			<div class="outer-box">
+				<div class="normal-box">
+					<label>Bildpfad:</label>
+					<input type="text" id="formimageurl">
+				</div>
+			</div>
+			<div class="outer-box">
+				<div class="normal-box">
+					<label>Spielpfad:</label>
+					<input type="text" id="formgameurl">
+				</div>
+			</div>
+			<div class="outer-box">
+				<div class="normal-box">
+					<label>Entwickler/innen:</label>
+					<input type="text" id="formdeveloper">
+				</div>
+			</div>
+			<div class="outer-box">
+				<div class="normal-box">
+					<label>Plattform:</label>
+					<select name="top5" size="5" id="formplatform">
+						<option value="1">GOG</option>
+						<option value="2">Epic</option>
+						<option value="3">Origin</option>
+						<option value="4">Amazon</option>
+						<option value="5">Ubisoft</option>
+						<option value="6">IndieGala</option>
+						<option value="7">Steam</option>
+					</select>
+				</div>
+			</div>
+			<div class="outer-box">
+				<div class="normal-box">
+					<button type="submit">Objekt hinzufügen</button>
+				</div>
+			</div>
+		</form>
+	</div>
+	<div id="main">
 	<h1>Liste</h1>
+	<div class="row" id="row">
+	<script>
+		const electron = require('electron');
+		const {ipcRenderer} = electron;
+
+		//Datenbank laden
+		const sqlite3 = require('sqlite3').verbose();
+		const db = new sqlite3.Database('data.sqlite3');
+		console.log("Datenbank geladen");
+
+		//Tabelle erstellen
+		db.run("CREATE TABLE IF NOT EXISTS tabelle (name TEXT NOT NULL, imageurl TEXT NOT NULL, id TEXT NOT NULL, platform TEXT NOT NULL, gameurl TEXT NOT NULL, developer TEXT NOT NULL)");
+
+		//Basic Elements
+		const main = document.getElementById('main');
+		const itemadd = document.getElementById('itemadd');
+		const myrow = document.getElementById('row');
+		console.log("Elemente zugeordnet")
+
+		//Formular zum Hinzufügen eines Items
+		const form = document.querySelector('form');
+		form.addEventListener('submit', submitForm);
+		function submitForm(event){
+			console.log("Formular getriggert")
+			event.preventDefault();
+			//Felder zu Variablen zuordnen
+			name = document.querySelector('#formname').value;
+			imageurl = document.querySelector('#formimageurl').value;
+			developer = document.querySelector('#formdeveloper').value;
+			id = document.querySelector('#formid').value;
+			gameurl = document.querySelector('#formgameurl').value;
+			gameurlsplit = gameurl.split(":");
+			if (gameurlsplit[0].length==1) {
+				gameurl = gameurl.replace("\\","\\\\");
+			};
+			//Platform auslesen
+			select = document.querySelector('#formplatform');
+			const platform = select.options[select.selectedIndex].text;
+			console.log("Felder zugeordnet");
+			//Seite wechseln
+			main.style.display='block';
+			itemadd.style.display='none'
+			console.log("Seite gewechselt");
+			//In Datenbank speichern
+			db.run("INSERT INTO tabelle (name,imageurl,id,platform,gameurl,developer) VALUES('"+name+"','"+imageurl+"','"+id+"','"+platform+"','"+gameurl+"','"+developer+"');");
+			console.log("In Datenbank gespeichert");
+			addItem(name, imageurl, id);
+		}
+
+		//Beim Start Items laden
+		function loadImages(){
+			//EventListener hinzufügen
+			document.getElementById('plus').addEventListener('click', moveToAddWindow);
+			document.getElementById('X').addEventListener('click', clearAll);
+			//Items aus Datenbank abrufen
+			db.each("SELECT name, imageurl, id FROM tabelle", function(err, row) {
+				name = row.name;
+				imageurl = row.imageurl;
+				id = row.id;
+				addItem( name, imageurl, id);
+				console.log("Item " + name + " erstellt mit URL: " + imageurl);
+			});
+		};
+
+		function addItem(name,imageurl, id){
+			//Outerbox erstellen
+			outerbox = document.createElement('div');
+			myrow.appendChild(outerbox);
+			outerbox.className = 'outer-box images-list';
+			outerbox.id = 'outerbox';
+			normalbox = document.createElement('div');
+			outerbox.appendChild(normalbox);
+			normalbox.className = 'normal-box';
+			console.log("Outerbox und Normalbox erstellt");
+			//Bild hinzufügen
+			image = document.createElement('img');
+			normalbox.appendChild(image);
+			image.src = imageurl;
+			image.id = id;
+			image.className = 'list-img';
+			console.log(imageurl + " hinzugefügt");
+			image.addEventListener('click', itemTriggered);
+		}
+
+		//Datei ausführen
+		function runFile(){
+			//Namen speichern
+			name = document.getElementById('itemname').innerHTML;
+			console.log("Name gespeichert");
+			//gameurl aus Datenbank lesen
+			console.log("Lese gameurl aus Datenbank");
+			console.log(name);
+			db.get("SELECT gameurl FROM tabelle WHERE name = '"+ name + "';", function(err, row){
+				child = require('child_process').execFile;
+				executablePath = row.gameurl;
+				console.log("Starte Programm");
+				//Programm ausführen
+				child(executablePath, function(err, data) {
+    				if(err){
+       					console.error(err);
+       					return;
+    				}
+ 					console.log(data.toString());
+				});
+			})
+		}
+
+		//Link öffnen
+		function openLink(){
+			name = document.getElementById('itemname').innerHTML;
+			console.log("Namen gespeichert");
+			//gameurl aus Datenbank lesen
+			console.log("Lese gameurl aus Datenbank");
+			console.log(name);
+			db.get("SELECT gameurl FROM tabelle WHERE name = '"+ name + "';", function(err, row){
+				gameurl = row.gameurl;
+				//URL öffnen
+				window.document.location.href = gameurl;
+			});
+		}
+
+		//Wechsel zur Itemseite
+		function itemTriggered(event){
+			id = event.target.id;
+			console.log(id + " wurde getriggert");
+			//Daten aus Datenbank erhalten
+			db.get("SELECT name, imageurl, platform, gameurl, developer FROM tabelle WHERE id = '" + id + "';", function(err, row){
+				//Daten in Variablen speichern
+				itemname = document.getElementById('itemname');
+				itemimage = document.getElementById('itemimage');
+				itemplatform = document.getElementById('itemplatform');
+				itemgameurl = document.getElementById('itemgameurl');
+				itemdeveloper = document.getElementById('itemdeveloper');
+				console.log("Datenbank erfolgreich ausgelesen");
+				//Daten in HTML einfügen
+				itemname.innerHTML = row.name;
+				itemimage.src = row.imageurl;
+				itemplatform.innerHTML = row.platform;
+				itemdeveloper.innerHTML = row.developer;
+				gameurl = row.gameurl
+				console.log("Daten eingefügt");
+				//Gameurl test
+				gameurlsplit = gameurl.split(":");
+				console.log(gameurlsplit[0]);
+				console.log(gameurlsplit[0].length);
+				if (gameurlsplit[0].length==1) {
+					itemgameurl.addEventListener('click', runFile);
+					console.log("runFile");
+				} else {
+					itemgameurl.addEventListener('click', openLink);
+					console.log("openLink");
+				};
+				
+				//Seite wechseln
+				main.style.display='none';
+				itemsite.style.display='block'
+				console.log("Seite gewechselt");
+			});
+		}
+
+		//Zurück zur Hauptseite
+		function backHome(){
+			main.style.display='block';
+			itemadd.style.display='none';
+			itemsite.style.display='none';
+		};
+
+		ipcRenderer.on('item:home', function(){
+			backHome();
+		});
+
+		ipcRenderer.on('item:add', function(){
+			moveToAddWindow();
+		});
+
+		function moveToAddWindow(){
+			main.style.display='none';
+			itemadd.style.display='block';
+			itemsite.style.display='none';
+		}
+
+		ipcRenderer.on('item:clear', function(){
+			clearAll();
+		});
+
+		//Alle Items löschen
+		function clearAll(){
+			//Datenbank leeren
+			db.run("DELETE FROM tabelle");
+			//row leeren
+			myrow.innerHTML = '';
+		}
+	</script>
+	</div>
+	<div class="row options">
+		<div class="outer-box images-list" id="outerbox">
+			<div class="normal-box">
+				<img src="add.png" id="plus" class="list-img">
+			</div>
+		</div>
+		<div class="outer-box images-list" id="outerbox">
+			<div class="normal-box">
+				<img src="delete.png" id="X" class="list-img">
+			</div>
+		</div>
+	</div>
+</div>
 </body>
 </html>
