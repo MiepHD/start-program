@@ -1,12 +1,13 @@
 {
   "name": "electron-quick-start",
   "version": "1.0.0",
-  "description": "",
+  "description": "Program to start games and apps.",
   "main": "main.js",
   "dependencies": {
     "electron": "^15.0.0",
     "sqlite3": "^5.0.2"
   },
+  "repository": "https://github.com/MiepHD/start-program",
   "devDependencies": {},
   "scripts": {
     "start": "electron ."
