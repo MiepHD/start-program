@@ -97,9 +97,6 @@
 		const db = new sqlite3.Database('data.sqlite3');
 		console.log("Datenbank geladen");
 
-		//Tabelle erstellen
-		db.run("CREATE TABLE IF NOT EXISTS tabelle (name TEXT NOT NULL, imageurl TEXT NOT NULL, id TEXT NOT NULL, platform TEXT NOT NULL, gameurl TEXT NOT NULL, developer TEXT NOT NULL)");
-
 		//Basic Elements
 		const main = document.getElementById('main');
 		const itemadd = document.getElementById('itemadd');

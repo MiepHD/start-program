@@ -9,6 +9,9 @@ const {app, BrowserWindow, Menu, ipcMain} = electron;
 let mainWindow;
 let addWindow;
 
+//Tabelle erstellen
+db.run("CREATE TABLE IF NOT EXISTS tabelle (name TEXT NOT NULL, imageurl TEXT NOT NULL, id TEXT NOT NULL, platform TEXT NOT NULL, gameurl TEXT NOT NULL, developer TEXT NOT NULL)");
+
 // Beim Starten ausf�hren
 app.on('ready', function(){
 	//Hauptfenster erstellen
