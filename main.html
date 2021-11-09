@@ -7,18 +7,20 @@
 	<link rel="stylesheet" href="startpage.css">
 	<link rel="stylesheet" href="miep_hd.css">
 </head>
-<body id="body" onload="loadImages();">
+<body id="body">
 	<div id="itemsite" style="display: none;">
+		<div class="navbar">
+			<img src="back.png" class="navbar-icon" onclick="backHome();">
+			<a id="itemgameurl" class="button">Start</a>
+		</div>
 		<h1 id="itemname">Name</h1>
 		<div class="row">
-			<img src="back.png" style="height: 30px; width: 30px;" onclick="backHome();">
 			<div class="outer-box" id="outerbox">
 				<div class="normal-box">
 					<div class="side-image">
 						<img id="itemimage" src="">
 					</div>
 					<div class="side-image-text">
-						<a id="itemgameurl" class="button big-content">Start</a>
 						<p class="big-content">
 							Plattform: <div id="itemplatform" style="font-size: 20px;">Plattform</div>
 						</p>
@@ -31,9 +33,11 @@
 		</div>
 	</div>
 	<div id="itemadd" style="display: none;">
+		<div class="navbar">
+			<img src="back.png" class="navbar-icon" onclick="backHome();">
+		</div>
 		<h1>Spiel/Programm hinzufügen</h1>
 		<form class="row">
-			<img src="back.png" style="height: 30px; width: 30px;" onclick="backHome();">
 			<div class="outer-box">
 				<div class="normal-box">
 					<label>Name:</label>
@@ -50,12 +54,14 @@
 				<div class="normal-box">
 					<label>Bildpfad:</label>
 					<input type="text" id="formimageurl">
+					<p id="invaild-imageurl" style="display:none; color: #BC2734;">Der Bildpfad ist ungültig!</p>
 				</div>
 			</div>
 			<div class="outer-box">
 				<div class="normal-box">
 					<label>Spielpfad:</label>
 					<input type="text" id="formgameurl">
+					<p id="invaild-gameurl" style="display:none; color: #BC2734;">Der Spielpfad ist ungültig!</p>
 				</div>
 			</div>
 			<div class="outer-box">
@@ -86,11 +92,16 @@
 		</form>
 	</div>
 	<div id="main">
-	<h1>Liste</h1>
+		<div class="navbar">
+			<img src="add.png" id="main-navbar-add" class="navbar-icon">
+			<img src="delete.png" id="main-navbar-delete" class="navbar-icon">
+		</div>
+	<h1>Spiele</h1>
 	<div class="row" id="row">
 	<script>
 		const electron = require('electron');
 		const {ipcRenderer} = electron;
+		const fs = require('fs');
 
 		//Datenbank laden
 		const sqlite3 = require('sqlite3').verbose();
@@ -115,39 +126,73 @@
 			developer = document.querySelector('#formdeveloper').value;
 			id = document.querySelector('#formid').value;
 			gameurl = document.querySelector('#formgameurl').value;
-			gameurlsplit = gameurl.split(":");
-			if (gameurlsplit[0].length==1) {
-				gameurl = gameurl.replace("\\","\\\\");
+			gameurlvaild = isVaild(gameurl);
+			imageurlvaild = isVaild(imageurl);
+			if (gameurlvaild==true&&imageurlvaild==true) {
+				//Platform auslesen
+				select = document.querySelector('#formplatform');
+				const platform = select.options[select.selectedIndex].text;
+				console.log("Felder zugeordnet");
+				//Seite wechseln
+				main.style.display='block';
+				itemadd.style.display='none'
+				console.log("Seite gewechselt");
+				//In Datenbank speichern
+				db.run("INSERT INTO tabelle (name,imageurl,id,platform,gameurl,developer) VALUES('"+name+"','"+imageurl+"','"+id+"','"+platform+"','"+gameurl+"','"+developer+"');");
+				console.log("In Datenbank gespeichert");
+				addItem(name, imageurl, id);
+			} else {
+				if (gameurlvaild==false) {
+					document.getElementById('invaild-gameurl').style.display = "block";
+				} else {
+					console.log("Gameurlvaild:" + gameurlvaild);
+					document.getElementById('invaild-gameurl').style.display = "none";
+				}
+				if (imageurlvaild==false) {
+					document.getElementById('invaild-imageurl').style.display = "block";
+				} else {
+					console.log("Imageurlvaild:" + imageurlvaild);
+					document.getElementById('invaild-imageurl').style.display = "none";
+				}
+			}
+		}
+		
+		//Beim Start Items laden
+		//Items aus Datenbank abrufen
+		db.each("SELECT name, imageurl, id FROM tabelle", function(err, row) {
+			name = row.name;
+			imageurl = row.imageurl;
+			id = row.id;
+			addItem( name, imageurl, id);
+			console.log("Item " + name + " erstellt mit URL: " + imageurl);
+		});
+
+		function isVaild(url) {
+			urlsplit = url.split(":");
+			if (urlsplit[0].length==1) {
+				url = url.replace("\\","\\\\");
+				wait = fs.access(url, fs.R_OK, (err) => {
+					if (err) { 
+						ok = false;
+						console.log(err);
+					} else {
+						ok = true;
+					}
+				});
+				nix = wait;
+				console.log("testFile"+ ok);
+			} else {
+				ok = isUrl(url);
+				console.log("openLink" + "IsLink:" + ok);
 			};
-			//Platform auslesen
-			select = document.querySelector('#formplatform');
-			const platform = select.options[select.selectedIndex].text;
-			console.log("Felder zugeordnet");
-			//Seite wechseln
-			main.style.display='block';
-			itemadd.style.display='none'
-			console.log("Seite gewechselt");
-			//In Datenbank speichern
-			db.run("INSERT INTO tabelle (name,imageurl,id,platform,gameurl,developer) VALUES('"+name+"','"+imageurl+"','"+id+"','"+platform+"','"+gameurl+"','"+developer+"');");
-			console.log("In Datenbank gespeichert");
-			addItem(name, imageurl, id);
+			if (ok==true) {
+				return true;
+			} else {
+				return false;
+			}
 		}
 
-		//Beim Start Items laden
-		function loadImages(){
-			//EventListener hinzufügen
-			document.getElementById('plus').addEventListener('click', moveToAddWindow);
-			document.getElementById('X').addEventListener('click', clearAll);
-			//Items aus Datenbank abrufen
-			db.each("SELECT name, imageurl, id FROM tabelle", function(err, row) {
-				name = row.name;
-				imageurl = row.imageurl;
-				id = row.id;
-				addItem( name, imageurl, id);
-				console.log("Item " + name + " erstellt mit URL: " + imageurl);
-			});
-		};
-
+		//Item hinzufügen
 		function addItem(name,imageurl, id){
 			//Outerbox erstellen
 			outerbox = document.createElement('div');
@@ -184,12 +229,23 @@
 				child(executablePath, function(err, data) {
     				if(err){
        					console.error(err);
-       					return;
-    				}
- 					console.log(data.toString());
-				});
+       					return false;
+    				} else {
+						return true;
+						console.log(data.toString());
+					}
+				})
 			})
-		}
+		};
+
+		function isUrl(str) {
+  			regexp =  /^(?:(?:https?|ftp):\/\/)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,})))(?::\d{2,5})?(?:\/\S*)?$/;
+        	if (regexp.test(str)) {
+        		return true;
+        	} else {
+        	return false;
+        	}
+		};
 
 		//Link öffnen
 		function openLink(){
@@ -203,7 +259,7 @@
 				//URL öffnen
 				window.document.location.href = gameurl;
 			});
-		}
+		};
 
 		//Wechsel zur Itemseite
 		function itemTriggered(event){
@@ -259,6 +315,8 @@
 			moveToAddWindow();
 		});
 
+		//Zu Hinzufügenseite wechseln
+		document.getElementById('main-navbar-add').addEventListener('click', moveToAddWindow);
 		function moveToAddWindow(){
 			main.style.display='none';
 			itemadd.style.display='block';
@@ -270,6 +328,7 @@
 		});
 
 		//Alle Items löschen
+		document.getElementById('main-navbar-delete').addEventListener('click', clearAll);
 		function clearAll(){
 			//Datenbank leeren
 			db.run("DELETE FROM tabelle");
@@ -277,18 +336,6 @@
 			myrow.innerHTML = '';
 		}
 	</script>
-	</div>
-	<div class="row options">
-		<div class="outer-box images-list" id="outerbox">
-			<div class="normal-box">
-				<img src="add.png" id="plus" class="list-img">
-			</div>
-		</div>
-		<div class="outer-box images-list" id="outerbox">
-			<div class="normal-box">
-				<img src="delete.png" id="X" class="list-img">
-			</div>
-		</div>
 	</div>
 </div>
 </body>
